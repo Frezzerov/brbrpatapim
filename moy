@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Snake</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-family: Arial, sans-serif;
+
+            background:
+                radial-gradient(circle at top, #193d2a, #07110c 65%);
+
+            color: white;
+        }
+
+        .game-container {
+            width: 560px;
+            max-width: 95vw;
+
+            padding: 25px;
+
+            background: rgba(10, 25, 17, 0.95);
+
+            border: 1px solid rgba(91, 255, 145, 0.2);
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 0 40px rgba(0, 255, 100, 0.08),
+                inset 0 0 30px rgba(0, 255, 100, 0.03);
+        }
+
+        h1 {
+            text-align: center;
+
+            margin-bottom: 18px;
+
+            font-size: 34px;
+
+            color: #72ff9b;
+
+            text-shadow:
+                0 0 10px rgba(75, 255, 130, 0.5);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+
+            margin-bottom: 15px;
+
+            font-size: 17px;
+        }
+
+        .stat {
+            padding: 9px 15px;
+
+            border-radius: 10px;
+
+            background: rgba(255, 255, 255, 0.05);
+
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .score {
+            color: #6dff95;
+        }
+
+        .high-score {
+            color: #ffd85c;
+        }
+
+        .game-wrapper {
+            position: relative;
+
+            display: flex;
+            justify-content: center;
+        }
+
+        canvas {
+            width: 500px;
+            height: 500px;
+
+            max-width: 100%;
+            aspect-ratio: 1 / 1;
+
+            background:
+                linear-gradient(
+                    rgba(30, 80, 48, 0.25) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(30, 80, 48, 0.25) 1px,
+                    transparent 1px
+                ),
+                #08140d;
+
+            background-size: 25px 25px;
+
+            border: 2px solid #245c39;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 0 25px rgba(0, 255, 100, 0.08);
+        }
+
+        .message {
+            position: absolute;
+
+            top: 50%;
+            left: 50%;
+
+            transform: translate(-50%, -50%);
+
+            text-align: center;
+
+            pointer-events: none;
+
+            background: rgba(0, 0, 0, 0.7);
+
+            padding: 20px 30px;
+
+            border-radius: 15px;
+
+            border: 1px solid rgba(255, 255, 255, 0.15);
+
+            backdrop-filter: blur(5px);
+
+            opacity: 0;
+
+            transition: 0.2s;
+        }
+
+        .message.show {
+            opacity: 1;
+        }
+
+        .message h2 {
+            color: #ff6868;
+
+            margin-bottom: 8px;
+        }
+
+        .message p {
+            color: #ccc;
+        }
+
+        .controls {
+            margin-top: 18px;
+
+            display: flex;
+            justify-content: center;
+
+            gap: 12px;
+        }
+
+        button {
+            border: none;
+
+            padding: 11px 20px;
+
+            border-radius: 10px;
+
+            font-size: 15px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            color: #07110c;
+
+            background: #72ff9b;
+
+            transition:
+                transform 0.15s,
+                box-shadow 0.15s,
+                background 0.15s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+
+            background: #91ffb0;
+
+            box-shadow:
+                0 5px 20px rgba(70, 255, 120, 0.25);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .help {
+            margin-top: 16px;
+
+            text-align: center;
+
+            color: #899b8f;
+
+            font-size: 13px;
+
+            line-height: 1.6;
+        }
+
+        .legend {
+            display: flex;
+
+            justify-content: center;
+
+            flex-wrap: wrap;
+
+            gap: 20px;
+
+            margin-top: 12px;
+
+            font-size: 13px;
+
+            color: #aebbb2;
+        }
+
+        .legend-item {
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+
+            border-radius: 50%;
+        }
+
+        .green-dot {
+            background: #ff4d4d;
+            box-shadow: 0 0 8px #ff4d4d;
+        }
+
+        .gold-dot {
+            background: #ffd83d;
+            box-shadow: 0 0 8px #ffd83d;
+        }
+
+        .blue-dot {
+            background: #4dc3ff;
+            box-shadow: 0 0 8px #4dc3ff;
+        }
+
+        .wall-dot {
+            width: 10px;
+            height: 10px;
+
+            border-radius: 2px;
+
+            background: #9b65ff;
+            box-shadow: 0 0 8px #9b65ff;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .stats {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="game-container">
+
+    <h1>🐍 Snake</h1>
+
+    <div class="stats">
+
+        <div class="stat">
+            Счёт:
+            <span class="score" id="score">0</span>
+        </div>
+
+        <div class="stat">
+            Рекорд:
+            <span class="high-score" id="highScore">0</span>
+        </div>
+
+    </div>
+
+    <div class="game-wrapper">
+
+        <canvas id="game" width="500" height="500"></canvas>
+
+        <div class="message" id="message">
+
+            <h2 id="messageTitle">Игра окончена</h2>
+
+            <p id="messageText">
+                Нажми «Начать заново»
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="controls">
+
+        <button id="restart">
+            🔄 Начать заново
+        </button>
+
+    </div>
+
+    <div class="help">
+        Управление: стрелки или WASD<br>
+        Пробел — пауза
+    </div>
+
+    <div class="legend">
+
+        <div class="legend-item">
+            <span class="dot green-dot"></span>
+            Обычное яблоко +1
+        </div>
+
+        <div class="legend-item">
+            <span class="dot gold-dot"></span>
+            Золотое яблоко +3
+        </div>
+
+        <div class="legend-item">
+            <span class="dot blue-dot"></span>
+            Синее яблоко +2 (замедление)
+        </div>
+
+        <div class="legend-item">
+            <span class="wall-dot"></span>
+            Препятствие
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const scoreElement = document.getElementById("score");
+    const highScoreElement = document.getElementById("highScore");
+
+    const restartButton = document.getElementById("restart");
+
+    const message = document.getElementById("message");
+    const messageTitle = document.getElementById("messageTitle");
+    const messageText = document.getElementById("messageText");
+
+
+    // Размер одной клетки
+    const cellSize = 25;
+
+    // 500 / 25 = 20 клеток
+    const gridSize = canvas.width / cellSize;
+
+
+
+    let snake;
+
+    let food;
+
+    let goldenFood;
+
+    let slowFood;
+
+    let obstacles;
+
+    let direction;
+
+    let nextDirection;
+
+    let score;
+
+    let highScore =
+        Number(localStorage.getItem("snakeHighScore")) || 0;
+
+    let gameLoop;
+
+    let gameOver;
+
+    let paused;
+
+    let speed;
+
+    let boostTimer;
+
+    let slowTimer;
+
+
+    highScoreElement.textContent = highScore;
+
+
+
+    function startGame() {
+
+        clearInterval(gameLoop);
+
+        snake = [
+            { x: 10, y: 10 },
+            { x: 9, y: 10 },
+            { x: 8, y: 10 }
+        ];
+
+        direction = {
+            x: 1,
+            y: 0
+        };
+
+        nextDirection = {
+            x: 1,
+            y: 0
+        };
+
+        score = 0;
+
+        speed = 130;
+
+        gameOver = false;
+
+        paused = false;
+
+        boostTimer = 0;
+
+        slowTimer = 0;
+
+        obstacles = [];
+
+        scoreElement.textContent = score;
+
+        hideMessage();
+
+        createFood();
+
+        goldenFood = null;
+
+        slowFood = null;
+
+        gameLoop = setInterval(update, speed);
+
+        draw();
+    }
+
+
+
+    function update() {
+
+        if (gameOver || paused) {
+            return;
+        }
+
+        direction = nextDirection;
+
+        const head = {
+            x: snake[0].x + direction.x,
+            y: snake[0].y + direction.y
+        };
+
+
+
+
+        if (
+            head.x < 0 ||
+            head.x >= gridSize ||
+            head.y < 0 ||
+            head.y >= gridSize
+        ) {
+
+            endGame();
+
+            return;
+        }
+
+
+
+
+        for (let i = 0; i < snake.length; i++) {
+
+            if (
+                head.x === snake[i].x &&
+                head.y === snake[i].y
+            ) {
+
+                endGame();
+
+                return;
+            }
+        }
+
+
+
+
+        for (const wall of obstacles) {
+
+            if (
+                head.x === wall.x &&
+                head.y === wall.y
+            ) {
+
+                endGame();
+
+                return;
+            }
+        }
+
+
+        snake.unshift(head);
+
+
+        let ateFood = false;
+
+
+
+        if (
+            food &&
+            head.x === food.x &&
+            head.y === food.y
+        ) {
+
+            score += 1;
+
+            ateFood = true;
+
+            createFood();
+
+            increaseDifficulty();
+        }
+
+
+
+
+        if (
+            goldenFood &&
+            head.x === goldenFood.x &&
+            head.y === goldenFood.y
+        ) {
+
+            score += 3;
+
+            ateFood = true;
+
+            goldenFood = null;
+
+            activateBoost();
+
+            increaseDifficulty();
+        }
+
+
+
+
+        if (
+            slowFood &&
+            head.x === slowFood.x &&
+            head.y === slowFood.y
+        ) {
+
+            score += 2;
+
+            ateFood = true;
+
+            slowFood = null;
+
+            activateSlow();
+
+            increaseDifficulty();
+        }
+
+
+
+        if (!ateFood) {
+            snake.pop();
+        }
+
+
+
+        if (
+            !goldenFood &&
+            Math.random() < 0.015
+        ) {
+
+            createGoldenFood();
+        }
+
+
+
+        if (
+            !slowFood &&
+            Math.random() < 0.01
+        ) {
+
+            createSlowFood();
+        }
+
+
+
+        if (
+            score > 0 &&
+            score % 5 === 0 &&
+            obstacles.length < Math.floor(score / 5)
+        ) {
+
+            createObstacle();
+        }
+
+
+
+        if (boostTimer > 0) {
+
+            boostTimer--;
+
+            if (boostTimer === 0) {
+
+                resetSpeed();
+            }
+        }
+
+
+
+        if (slowTimer > 0) {
+
+            slowTimer--;
+
+            if (slowTimer === 0) {
+
+                resetSpeed();
+            }
+        }
+
+
+        scoreElement.textContent = score;
+
+        draw();
+    }
+
+
+
+
+    function createFood() {
+
+        let newFood;
+
+        do {
+
+            newFood = {
+                x: Math.floor(Math.random() * gridSize),
+                y: Math.floor(Math.random() * gridSize)
+            };
+
+        } while (isOccupied(newFood));
+
+
+        food = newFood;
+    }
+
+
+
+    function createGoldenFood() {
+
+        let newFood;
+
+        do {
+
+            newFood = {
+                x: Math.floor(Math.random() * gridSize),
+                y: Math.floor(Math.random() * gridSize)
+            };
+
+        } while (isOccupied(newFood));
+
+
+        goldenFood = newFood;
+    }
+
+
+
+    function createSlowFood() {
+
+        let newFood;
+
+        do {
+
+            newFood = {
+                x: Math.floor(Math.random() * gridSize),
+                y: Math.floor(Math.random() * gridSize)
+            };
+
+        } while (isOccupied(newFood));
+
+
+        slowFood = newFood;
+    }
+
+
+
+
+    function isOccupied(position) {
+
+        for (const part of snake) {
+
+            if (
+                part.x === position.x &&
+                part.y === position.y
+            ) {
+
+                return true;
+            }
+        }
+
+
+        for (const wall of obstacles) {
+
+            if (
+                wall.x === position.x &&
+                wall.y === position.y
+            ) {
+
+                return true;
+            }
+        }
+
+
+        if (
+            food &&
+            food.x === position.x &&
+            food.y === position.y
+        ) {
+
+            return true;
+        }
+
+
+        if (
+            goldenFood &&
+            goldenFood.x === position.x &&
+            goldenFood.y === position.y
+        ) {
+
+            return true;
+        }
+
+
+        if (
+            slowFood &&
+            slowFood.x === position.x &&
+            slowFood.y === position.y
+        ) {
+
+            return true;
+        }
+
+
+        return false;
+    }
+
+
+
+    function createObstacle() {
+
+        let wall;
+
+        do {
+
+            wall = {
+                x: Math.floor(Math.random() * gridSize),
+                y: Math.floor(Math.random() * gridSize)
+            };
+
+        } while (isOccupied(wall));
+
+
+        obstacles.push(wall);
+    }
+
+
+
+    function increaseDifficulty() {
+
+        if (score % 2 !== 0) {
+            return;
+        }
+
+        if (boostTimer > 0 || slowTimer > 0) {
+            return;
+        }
+
+        speed = Math.max(
+            55,
+            130 - score * 3
+        );
+
+        restartLoop();
+    }
+
+
+
+
+    function activateBoost() {
+
+        boostTimer = 40;
+
+        speed = 45;
+
+        restartLoop();
+    }
+
+
+
+
+    function activateSlow() {
+
+        slowTimer = 50;
+
+        speed = 180;
+
+        restartLoop();
+    }
+
+
+
+
+    function resetSpeed() {
+
+        if (boostTimer > 0) {
+
+            speed = 45;
+
+        } else if (slowTimer > 0) {
+
+            speed = 180;
+
+        } else {
+
+            speed = Math.max(
+                55,
+                130 - score * 3
+            );
+        }
+
+        restartLoop();
+    }
+
+
+
+    function restartLoop() {
+
+        clearInterval(gameLoop);
+
+        gameLoop = setInterval(
+            update,
+            speed
+        );
+    }
+
+
+
+
+    function draw() {
+
+
+        ctx.fillStyle = "#08140d";
+
+        ctx.fillRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+
+
+        ctx.strokeStyle =
+            "rgba(60, 130, 80, 0.16)";
+
+        ctx.lineWidth = 1;
+
+
+        for (let x = 0; x <= canvas.width; x += cellSize) {
+
+            ctx.beginPath();
+
+            ctx.moveTo(x, 0);
+
+            ctx.lineTo(
+                x,
+                canvas.height
+            );
+
+            ctx.stroke();
+        }
+
+
+        for (let y = 0; y <= canvas.height; y += cellSize) {
+
+            ctx.beginPath();
+
+            ctx.moveTo(0, y);
+
+            ctx.lineTo(
+                canvas.width,
+                y
+            );
+
+            ctx.stroke();
+        }
+
+
+
+
+        for (const wall of obstacles) {
+
+            const x = wall.x * cellSize;
+            const y = wall.y * cellSize;
+
+
+            ctx.fillStyle = "#7548c9";
+
+            ctx.shadowColor = "#9b65ff";
+
+            ctx.shadowBlur = 10;
+
+
+            ctx.fillRect(
+                x + 3,
+                y + 3,
+                cellSize - 6,
+                cellSize - 6
+            );
+
+
+            ctx.shadowBlur = 0;
+        }
+
+
+
+
+        if (food) {
+
+            const centerX =
+                food.x * cellSize + cellSize / 2;
+
+            const centerY =
+                food.y * cellSize + cellSize / 2;
+
+
+            ctx.beginPath();
+
+            ctx.arc(
+                centerX,
+                centerY,
+                8,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fillStyle = "#ff4d4d";
+
+            ctx.shadowColor = "#ff4d4d";
+
+            ctx.shadowBlur = 15;
+
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+
+
+            // листик
+
+            ctx.fillStyle = "#5cff7b";
+
+            ctx.fillRect(
+                centerX + 2,
+                centerY - 10,
+                5,
+                3
+            );
+        }
+
+
+
+
+        if (goldenFood) {
+
+            const centerX =
+                goldenFood.x * cellSize + cellSize / 2;
+
+            const centerY =
+                goldenFood.y * cellSize + cellSize / 2;
+
+
+            ctx.beginPath();
+
+            ctx.arc(
+                centerX,
+                centerY,
+                10,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fillStyle = "#ffd83d";
+
+            ctx.shadowColor = "#ffd83d";
+
+            ctx.shadowBlur = 25;
+
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+
+
+            ctx.fillStyle = "#fff4a3";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                centerX - 3,
+                centerY - 3,
+                3,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+        }
+
+
+
+
+        if (slowFood) {
+
+            const centerX =
+                slowFood.x * cellSize + cellSize / 2;
+
+            const centerY =
+                slowFood.y * cellSize + cellSize / 2;
+
+
+            ctx.beginPath();
+
+            ctx.arc(
+                centerX,
+                centerY,
+                9,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fillStyle = "#4dc3ff";
+
+            ctx.shadowColor = "#4dc3ff";
+
+            ctx.shadowBlur = 20;
+
+            ctx.fill();
+
+            ctx.shadowBlur = 0;
+
+
+            // блик
+
+            ctx.fillStyle = "#c9f0ff";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                centerX - 3,
+                centerY - 3,
+                2.5,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+        }
+
+
+
+        for (let i = snake.length - 1; i >= 0; i--) {
+
+            const part = snake[i];
+
+            const x = part.x * cellSize;
+            const y = part.y * cellSize;
+
+
+            if (i === 0) {
+
+                // Голова
+
+                ctx.fillStyle =
+                    boostTimer > 0
+                        ? "#ffe36e"
+                        : slowTimer > 0
+                            ? "#8fdcff"
+                            : "#72ff9b";
+
+                ctx.shadowColor =
+                    boostTimer > 0
+                        ? "#ffd83d"
+                        : slowTimer > 0
+                            ? "#4dc3ff"
+                            : "#72ff9b";
+
+                ctx.shadowBlur = 12;
+
+            } else {
+
+                // Тело
+
+                ctx.fillStyle =
+                    slowTimer > 0
+                        ? "#3ba8d7"
+                        : "#3bd76c";
+
+                ctx.shadowBlur = 0;
+            }
+
+
+            ctx.beginPath();
+
+            ctx.roundRect(
+                x + 2,
+                y + 2,
+                cellSize - 4,
+                cellSize - 4,
+                6
+            );
+
+            ctx.fill();
+
+
+            ctx.shadowBlur = 0;
+
+
+
+
+            if (i === 0) {
+
+                ctx.fillStyle = "#07110c";
+
+
+                let eye1;
+                let eye2;
+
+
+                if (direction.x === 1) {
+
+                    eye1 = {
+                        x: x + 17,
+                        y: y + 7
+                    };
+
+                    eye2 = {
+                        x: x + 17,
+                        y: y + 17
+                    };
+
+                } else if (direction.x === -1) {
+
+                    eye1 = {
+                        x: x + 8,
+                        y: y + 7
+                    };
+
+                    eye2 = {
+                        x: x + 8,
+                        y: y + 17
+                    };
+
+                } else if (direction.y === -1) {
+
+                    eye1 = {
+                        x: x + 7,
+                        y: y + 8
+                    };
+
+                    eye2 = {
+                        x: x + 17,
+                        y: y + 8
+                    };
+
+                } else {
+
+                    eye1 = {
+                        x: x + 7,
+                        y: y + 17
+                    };
+
+                    eye2 = {
+                        x: x + 17,
+                        y: y + 17
+                    };
+                }
+
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    eye1.x,
+                    eye1.y,
+                    2,
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fill();
+
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    eye2.x,
+                    eye2.y,
+                    2,
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fill();
+            }
+        }
+
+
+
+
+        if (boostTimer > 0) {
+
+            ctx.fillStyle =
+                "rgba(255, 216, 61, 0.06)";
+
+            ctx.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+        }
+
+
+
+
+        if (slowTimer > 0) {
+
+            ctx.fillStyle =
+                "rgba(77, 195, 255, 0.06)";
+
+            ctx.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+        }
+    }
+
+
+
+
+    function endGame() {
+
+        gameOver = true;
+
+        clearInterval(gameLoop);
+
+
+        if (score > highScore) {
+
+            highScore = score;
+
+            localStorage.setItem(
+                "snakeHighScore",
+                highScore
+            );
+
+            highScoreElement.textContent =
+                highScore;
+        }
+
+
+        messageTitle.textContent =
+            "💥 Игра окончена";
+
+        messageText.textContent =
+            `Твой счёт: ${score}`;
+
+
+        message.classList.add("show");
+    }
+
+
+
+    function togglePause() {
+
+        if (gameOver) {
+            return;
+        }
+
+        paused = !paused;
+
+
+        if (paused) {
+
+            messageTitle.textContent =
+                "⏸ Пауза";
+
+            messageText.textContent =
+                "Нажми пробел, чтобы продолжить";
+
+            message.classList.add("show");
+
+        } else {
+
+            hideMessage();
+        }
+    }
+
+
+
+
+    function hideMessage() {
+
+        message.classList.remove("show");
+    }
+
+
+
+
+    document.addEventListener(
+        "keydown",
+        function(event) {
+
+            const key =
+                event.key.toLowerCase();
+
+
+
+            if (key === " ") {
+
+                event.preventDefault();
+
+                togglePause();
+
+                return;
+            }
+
+
+
+
+            if (
+                (key === "arrowup" || key === "w") &&
+                direction.y !== 1
+            ) {
+
+                nextDirection = {
+                    x: 0,
+                    y: -1
+                };
+            }
+
+
+            if (
+                (key === "arrowdown" || key === "s") &&
+                direction.y !== -1
+            ) {
+
+                nextDirection = {
+                    x: 0,
+                    y: 1
+                };
+            }
+
+
+            if (
+                (key === "arrowleft" || key === "a") &&
+                direction.x !== 1
+            ) {
+
+                nextDirection = {
+                    x: -1,
+                    y: 0
+                };
+            }
+
+
+            if (
+                (key === "arrowright" || key === "d") &&
+                direction.x !== -1
+            ) {
+
+                nextDirection = {
+                    x: 1,
+                    y: 0
+                };
+            }
+
+        }
+    );
+
+
+
+
+    restartButton.addEventListener(
+        "click",
+        startGame
+    );
+
+
+
+
+    startGame();
+
+</script>
+
+</body>
+</html>
